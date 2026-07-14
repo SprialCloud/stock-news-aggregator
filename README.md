@@ -1,15 +1,28 @@
 # Market Pulse
 
-Stock-news aggregator built with Next.js App Router. It fetches the latest market news from Finnhub when `FINNHUB_API_KEY` is present and falls back to preview data when it is not.
+Full-stack stock-news aggregator built with Next.js 16, Neon Auth, Prisma, and PostgreSQL. It fetches market news from Finnhub when `FINNHUB_API_KEY` is present and falls back to preview data when it is not.
 
 ## Run locally
 
 1. Install Node.js 20+.
-2. Copy `.env.example` to `.env.local` and add a PostgreSQL connection string and optional Finnhub key.
-3. Run `npm install`, `npm run db:generate`, `npm run db:push`, then `npm run dev`.
+2. Copy `.env.example` to `.env.local`.
+3. Add `DATABASE_URL`, `NEON_AUTH_BASE_URL`, and a random `NEON_AUTH_COOKIE_SECRET` of at least 32 characters. `FINNHUB_API_KEY` is optional.
+4. Run `npm install`, `npm run db:push`, and `npm run dev`.
+
+The portfolio API requires a Neon Auth session. Each authenticated user receives a separate portfolio in PostgreSQL.
 
 ## Deploy
 
-Push this folder to GitHub and import it into Vercel. Add `DATABASE_URL` and `FINNHUB_API_KEY` under Vercel project environment variables. A hosted PostgreSQL provider such as Neon or Supabase works with the included Prisma schema.
+Import the GitHub repository into Vercel and configure these project environment variables for Production and Preview:
 
-Portfolio additions call `/api/portfolio` and persist to PostgreSQL. Until an authentication provider is added, this route deliberately uses one demo identity; replace `DEMO_EMAIL` with the signed-in user's identity when integrating Auth.js or Clerk.
+- `DATABASE_URL` (use Neon's pooled connection string for serverless deployments)
+- `NEON_AUTH_BASE_URL`
+- `NEON_AUTH_COOKIE_SECRET`
+- `FINNHUB_API_KEY` (optional)
+
+After Vercel assigns a public URL, add the exact origin (for example, `https://your-project.vercel.app`) under Neon Console → Auth → Configuration → Domains. Neon Auth only redirects to allowlisted production domains.
+
+## Checks
+
+- `npm test` validates portfolio input normalization.
+- `npm run build` runs the production compilation and TypeScript checks.
