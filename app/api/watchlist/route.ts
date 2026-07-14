@@ -8,8 +8,8 @@ async function getCurrentUser() {
   if (!session?.user) return null;
 
   return prisma.user.upsert({
-    where: { id: session.user.id },
-    update: { email: session.user.email, name: session.user.name },
+    where: { email: session.user.email },
+    update: { name: session.user.name },
     create: { id: session.user.id, email: session.user.email, name: session.user.name },
   });
 }
@@ -22,7 +22,8 @@ export async function GET() {
       where: { userId: user.id },
       orderBy: { createdAt: "asc" },
     }));
-  } catch {
+  } catch (error) {
+    console.error("Watchlist GET failed", error);
     return NextResponse.json({ error: "Watchlist storage is unavailable." }, { status: 503 });
   }
 }
@@ -45,7 +46,8 @@ export async function POST(request: NextRequest) {
 
     const item = await prisma.watchlistItem.create({ data: { userId: user.id, symbol } });
     return NextResponse.json(item, { status: 201 });
-  } catch {
+  } catch (error) {
+    console.error("Watchlist POST failed", error);
     return NextResponse.json({ error: "Watchlist storage is unavailable." }, { status: 503 });
   }
 }
@@ -59,7 +61,8 @@ export async function DELETE(request: NextRequest) {
 
     await prisma.watchlistItem.delete({ where: { userId_symbol: { userId: user.id, symbol } } });
     return new NextResponse(null, { status: 204 });
-  } catch {
+  } catch (error) {
+    console.error("Watchlist DELETE failed", error);
     return NextResponse.json({ error: "Watchlist storage is unavailable." }, { status: 503 });
   }
 }

@@ -7,10 +7,17 @@ export async function GET() {
     const { data: session } = await auth.getSession();
     if (!session?.user) return NextResponse.json({ error: "Sign in to view trade history." }, { status: 401 });
 
-    const portfolio = await prisma.portfolio.findFirst({
-      where: { userId: session.user.id },
-      select: { id: true },
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: {
+        portfolios: {
+          orderBy: { createdAt: "asc" },
+          take: 1,
+          select: { id: true },
+        },
+      },
     });
+    const portfolio = user?.portfolios[0];
     if (!portfolio) return NextResponse.json([]);
 
     return NextResponse.json(await prisma.trade.findMany({
@@ -18,7 +25,8 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
       take: 50,
     }));
-  } catch {
+  } catch (error) {
+    console.error("Trade history GET failed", error);
     return NextResponse.json({ error: "Trade history is unavailable." }, { status: 503 });
   }
 }

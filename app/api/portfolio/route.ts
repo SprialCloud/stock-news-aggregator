@@ -13,12 +13,15 @@ async function getPortfolio() {
   const { data: session } = await auth.getSession();
   if (!session?.user) return null;
   const user = await prisma.user.upsert({
-    where: { id: session.user.id },
-    update: { email: session.user.email, name: session.user.name },
+    where: { email: session.user.email },
+    update: { name: session.user.name },
     create: { id: session.user.id, email: session.user.email, name: session.user.name, portfolios: { create: { name: "My Portfolio" } } },
     include: { portfolios: { include: { holdings: { orderBy: { createdAt: "asc" } } } } }
   });
-  return user.portfolios[0];
+  return user.portfolios[0] ?? prisma.portfolio.create({
+    data: { userId: user.id, name: "My Portfolio" },
+    include: { holdings: { orderBy: { createdAt: "asc" } } },
+  });
 }
 
 export async function GET() {
@@ -26,7 +29,10 @@ export async function GET() {
     const portfolio = await getPortfolio();
     if (!portfolio) return NextResponse.json({ error: "Sign in to view your portfolio." }, { status: 401 });
     return NextResponse.json(portfolio.holdings);
-  } catch { return NextResponse.json({ error: "Portfolio storage is unavailable." }, { status: 503 }); }
+  } catch (error) {
+    console.error("Portfolio GET failed", error);
+    return NextResponse.json({ error: "Portfolio storage is unavailable." }, { status: 503 });
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -80,6 +86,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
     if (error instanceof PortfolioTradeError) return NextResponse.json({ error: error.message }, { status: error.status });
+    console.error("Portfolio POST failed", error);
     return NextResponse.json({ error: "Portfolio storage is unavailable. Configure DATABASE_URL." }, { status: 503 });
   }
 }
@@ -92,5 +99,8 @@ export async function DELETE(request: NextRequest) {
     if (!symbol) return NextResponse.json({ error: "Holding not found." }, { status: 404 });
     await prisma.holding.delete({ where: { portfolioId_symbol: { portfolioId: portfolio.id, symbol } } });
     return new NextResponse(null, { status: 204 });
-  } catch { return NextResponse.json({ error: "Portfolio storage is unavailable." }, { status: 503 }); }
+  } catch (error) {
+    console.error("Portfolio DELETE failed", error);
+    return NextResponse.json({ error: "Portfolio storage is unavailable." }, { status: 503 });
+  }
 }
