@@ -47,6 +47,17 @@ test("calculates a partial sale and keeps average cost", () => {
   assert.ok(Math.abs(sale.realizedPnL - 49.41176470588239) < 0.000001);
 });
 
+test("closes a position when every share is sold", () => {
+  const sale = calculateSale(
+    { shares: 4, averageCost: 125 },
+    { shares: 4, price: 140 },
+  );
+
+  assert.ok(sale);
+  assert.equal(sale.remainingShares, 0);
+  assert.equal(sale.realizedPnL, 60);
+});
+
 test("rejects selling more shares than the position", () => {
   assert.equal(calculateSale({ shares: 2, averageCost: 100 }, { shares: 3, price: 110 }), null);
 });

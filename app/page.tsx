@@ -51,6 +51,7 @@ export default function Home() {
   const [quoteStatus, setQuoteStatus] = useState("Loading live quotes…");
   const [tradeModal, setTradeModal] = useState(false);
   const [tradeForm, setTradeForm] = useState(emptyTradeForm);
+  const [sellAllHolding, setSellAllHolding] = useState<Holding | null>(null);
   const [tradeMessage, setTradeMessage] = useState("");
   const [notice, setNotice] = useState("");
   const [watchlistSymbol, setWatchlistSymbol] = useState("");
@@ -168,9 +169,33 @@ export default function Home() {
 
   function openTrade(type: TradeType = "BUY", symbol = "") {
     if (!session) { window.location.href = "/auth/sign-in"; return; }
+    setSellAllHolding(null);
     setTradeForm({ ...emptyTradeForm, type, symbol });
     setTradeMessage("");
     setTradeModal(true);
+  }
+
+  function openSellAll(holding: Holding) {
+    if (!session) { window.location.href = "/auth/sign-in"; return; }
+    const latestPrice = quotes[holding.symbol]?.current ?? holding.averageCost;
+    setSellAllHolding(holding);
+    setTradeForm({
+      type: "SELL",
+      symbol: holding.symbol,
+      companyName: holding.companyName,
+      shares: String(holding.shares),
+      price: String(latestPrice),
+    });
+    setTradeMessage("");
+    setTradeModal(true);
+  }
+
+  function closeTradeModal() {
+    if (saving) return;
+    setTradeModal(false);
+    setSellAllHolding(null);
+    setTradeForm(emptyTradeForm);
+    setTradeMessage("");
   }
 
   async function submitTrade(event: React.FormEvent) {
@@ -200,8 +225,11 @@ export default function Home() {
     setTrades((items) => [stored.trade, ...items].slice(0, 50));
     setNotice(input.type === "BUY"
       ? `${input.symbol} purchase added. Total: ${stored.holding.shares} shares.`
-      : `${input.symbol} sale recorded. Realized P/L: ${formatSignedCurrency(Number(stored.realizedPnL))}.`);
+      : sellAllHolding
+        ? `${input.symbol} position closed. Realized P/L: ${formatSignedCurrency(Number(stored.realizedPnL))}.`
+        : `${input.symbol} sale recorded. Realized P/L: ${formatSignedCurrency(Number(stored.realizedPnL))}.`);
     setTradeModal(false);
+    setSellAllHolding(null);
     setTradeForm(emptyTradeForm);
   }
 
@@ -323,14 +351,14 @@ export default function Home() {
       <div className="page-shell">
         {sessionPending ? <LoadingBlock label="Checking your account" /> : !session ? <SignInPanel message="Sign in to view and manage your portfolio." /> : <>
           <div className="metric-grid"><MetricCard label="Market value" value={formatCurrency(marketValue)} /><MetricCard label="Cost basis" value={formatCurrency(costBasis)} /><MetricCard label="Unrealized P/L" value={formatSignedCurrency(unrealizedPnL)} tone={unrealizedPnL < 0 ? "down" : "up"} /></div>
-          <section className="data-card"><div className="data-heading"><div><h2>Holdings</h2><p>Live positions at the latest available price.</p></div><small>{quoteStatus}</small></div>{accountLoading ? <LoadingBlock label="Loading holdings" /> : holdings.length === 0 ? <EmptyPanel title="No holdings yet" message="Buy your first stock to start tracking portfolio performance." /> : <div className="data-table holdings-table"><div className="table-head"><span>Symbol</span><span>Shares / avg.</span><span>Current</span><span>Market value</span><span>Unrealized</span><span></span></div>{holdings.map((holding) => <HoldingRow key={holding.symbol} holding={holding} quote={quotes[holding.symbol]} onSell={() => openTrade("SELL", holding.symbol)} />)}</div>}</section>
+          <section className="data-card"><div className="data-heading"><div><h2>Holdings</h2><p>Live positions at the latest available price.</p></div><small>{quoteStatus}</small></div>{accountLoading ? <LoadingBlock label="Loading holdings" /> : holdings.length === 0 ? <EmptyPanel title="No holdings yet" message="Buy your first stock to start tracking portfolio performance." /> : <div className="data-table holdings-table"><div className="table-head"><span>Symbol</span><span>Shares / avg.</span><span>Current</span><span>Market value</span><span>Unrealized</span><span></span></div>{holdings.map((holding) => <HoldingRow key={holding.symbol} holding={holding} quote={quotes[holding.symbol]} onSellAll={() => openSellAll(holding)} />)}</div>}</section>
           <section className="data-card"><div className="data-heading"><div><h2>Trade history</h2><p>Your most recent portfolio activity.</p></div><small>Latest 50 trades</small></div>{trades.length === 0 ? <EmptyPanel title="No trades recorded" message="Your completed buys and sells will appear here." /> : <div className="data-table trades-table"><div className="table-head"><span>Type</span><span>Symbol</span><span>Shares</span><span>Price</span><span>Realized P/L</span><span>Date</span></div>{trades.map((trade) => <div className="table-row" key={trade.id}><span className={`trade-pill ${trade.type.toLowerCase()}`}>{trade.type}</span><b>{trade.symbol}</b><span>{trade.shares}</span><span>{formatCurrency(trade.price)}</span><span className={trade.realizedPnL == null ? "flat" : trade.realizedPnL < 0 ? "down" : "up"}>{trade.realizedPnL == null ? "N/A" : formatSignedCurrency(trade.realizedPnL)}</span><span>{formatTradeDate(trade.createdAt)}</span></div>)}</div>}</section>
         </>}
       </div>
     </>}
 
     {notice && <div className="toast" role="status"><CheckCircle size={18} weight="fill" />{notice}</div>}
-    {tradeModal && <TradeModal form={tradeForm} setForm={setTradeForm} message={tradeMessage} saving={saving} onSubmit={submitTrade} onClose={() => setTradeModal(false)} />}
+    {tradeModal && <TradeModal form={tradeForm} setForm={setTradeForm} message={tradeMessage} saving={saving} sellAllHolding={sellAllHolding} onSubmit={submitTrade} onClose={closeTradeModal} />}
   </main>;
 }
 
@@ -382,10 +410,10 @@ function WatchlistCard({ item, quote, onRemove, onNews }: { item: WatchlistItem;
   return <article className="watchlist-card"><div className="watchlist-card-top"><div><span className="watching-label"><Eye size={15} /> Watching</span><h2>{item.symbol}</h2></div><button className="icon-button" aria-label={`Remove ${item.symbol}`} onClick={() => onRemove(item.symbol)}><X size={17} /></button></div><strong>{quote ? formatCurrency(quote.current) : "N/A"}</strong><p className={!quote ? "flat" : quote.percentChange < 0 ? "down" : "up"}>{quote ? <><span>{formatSignedCurrency(quote.change)} today</span><span>{formatSignedPercent(quote.percentChange)}</span></> : "Live quote unavailable"}</p>{quote && <div className="quote-range"><span>Day low <b>{formatCurrency(quote.low)}</b></span><span>Day high <b>{formatCurrency(quote.high)}</b></span></div>}<button className="text-button" onClick={() => onNews(item.symbol)}>View related news <CaretRight size={15} weight="bold" /></button></article>;
 }
 
-function HoldingRow({ holding, quote, onSell }: { holding: Holding; quote?: StockQuote; onSell: () => void }) {
+function HoldingRow({ holding, quote, onSellAll }: { holding: Holding; quote?: StockQuote; onSellAll: () => void }) {
   const value = quote ? holding.shares * quote.current : holding.shares * holding.averageCost;
   const pnl = quote ? holding.shares * (quote.current - holding.averageCost) : 0;
-  return <div className="table-row"><b>{holding.symbol}</b><span>{holding.shares} / {formatCurrency(holding.averageCost)}</span><span>{quote ? formatCurrency(quote.current) : "N/A"}</span><span>{formatCurrency(value)}</span><span className={pnl < 0 ? "down" : "up"}>{quote ? formatSignedCurrency(pnl) : "N/A"}</span><button className="table-action" onClick={onSell}>Sell</button></div>;
+  return <div className="table-row"><b>{holding.symbol}</b><span>{holding.shares} / {formatCurrency(holding.averageCost)}</span><span>{quote ? formatCurrency(quote.current) : "N/A"}</span><span>{formatCurrency(value)}</span><span className={pnl < 0 ? "down" : "up"}>{quote ? formatSignedCurrency(pnl) : "N/A"}</span><button className="table-action" onClick={onSellAll} aria-label={`Sell all ${holding.symbol} shares`}>Sell all</button></div>;
 }
 
 function MetricCard({ label, value, tone }: { label: string; value: string; tone?: "up" | "down" }) { return <article className="metric-card"><span>{label}</span><strong className={tone}>{value}</strong></article>; }
@@ -397,14 +425,16 @@ function LoadingBlock({ label }: { label: string }) { return <div className="loa
 
 function FeedSkeleton() { return <div className="feed-skeleton" aria-label="Loading latest market news">{[0, 1, 2].map((item) => <div className="skeleton-row" key={item}><div><span /><b /><i /></div><em /></div>)}</div>; }
 
-function TradeModal({ form, setForm, message, saving, onSubmit, onClose }: { form: typeof emptyTradeForm; setForm: React.Dispatch<React.SetStateAction<typeof emptyTradeForm>>; message: string; saving: boolean; onSubmit: (event: React.FormEvent) => void; onClose: () => void }) {
+function TradeModal({ form, setForm, message, saving, sellAllHolding, onSubmit, onClose }: { form: typeof emptyTradeForm; setForm: React.Dispatch<React.SetStateAction<typeof emptyTradeForm>>; message: string; saving: boolean; sellAllHolding: Holding | null; onSubmit: (event: React.FormEvent) => void; onClose: () => void }) {
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [onClose]);
 
-  return <div className="modal-backdrop" onMouseDown={onClose}><form className="modal" role="dialog" aria-modal="true" aria-labelledby="trade-title" onSubmit={onSubmit} onMouseDown={(event) => event.stopPropagation()}><button type="button" className="icon-button close-button" onClick={onClose} aria-label="Close trade ticket"><X size={18} /></button><span className="context-label">Trade ticket</span><h2 id="trade-title">{form.type === "BUY" ? "Buy shares" : "Sell shares"}</h2><div className="trade-toggle"><button type="button" className={form.type === "BUY" ? "active" : ""} onClick={() => setForm({ ...form, type: "BUY" })}>Buy</button><button type="button" className={form.type === "SELL" ? "active sell" : ""} onClick={() => setForm({ ...form, type: "SELL" })}>Sell</button></div><label>Ticker<TickerInput value={form.symbol} onChange={(symbol) => setForm({ ...form, symbol })} /></label><label>Company name<input value={form.companyName} onChange={(event) => setForm({ ...form, companyName: event.target.value })} placeholder="Optional" /></label><div className="form-row"><label>Shares<input required min="0" step="any" type="number" value={form.shares} onChange={(event) => setForm({ ...form, shares: event.target.value })} /></label><label>{form.type === "BUY" ? "Purchase price" : "Sale price"}<input required min="0" step="any" type="number" value={form.price} onChange={(event) => setForm({ ...form, price: event.target.value })} /></label></div>{message && <p className="trade-message">{message}</p>}<button className={`submit ${form.type === "SELL" ? "sell" : ""}`} disabled={saving}>{saving ? "Saving..." : form.type === "BUY" ? "Buy shares" : "Sell shares"}</button></form></div>;
+  const estimatedProceeds = Number(form.shares) * Number(form.price);
+
+  return <div className="modal-backdrop" onMouseDown={onClose}><form className={`modal ${sellAllHolding ? "sell-all-modal" : ""}`} role="dialog" aria-modal="true" aria-labelledby="trade-title" onSubmit={onSubmit} onMouseDown={(event) => event.stopPropagation()}><button type="button" className="icon-button close-button" onClick={onClose} aria-label="Close trade ticket" disabled={saving}><X size={18} /></button><span className="context-label">{sellAllHolding ? "Close position" : "Trade ticket"}</span><h2 id="trade-title">{sellAllHolding ? `Sell all ${sellAllHolding.symbol}` : form.type === "BUY" ? "Buy shares" : "Sell shares"}</h2>{sellAllHolding ? <><div className="sell-all-summary"><div className="sell-all-symbol"><div><b>{sellAllHolding.symbol}</b><span>{sellAllHolding.companyName}</span></div><em>All shares</em></div><dl><div><dt>Shares to sell</dt><dd>{sellAllHolding.shares}</dd></div><div><dt>Average cost</dt><dd>{formatCurrency(sellAllHolding.averageCost)}</dd></div><div><dt>Estimated proceeds</dt><dd>{Number.isFinite(estimatedProceeds) ? formatCurrency(estimatedProceeds) : "$0.00"}</dd></div></dl></div><label>Sale price<input required min="0.000001" step="any" type="number" inputMode="decimal" value={form.price} onChange={(event) => setForm({ ...form, price: event.target.value })} /></label><p className="sell-all-note">This sells your entire position. The price starts at the latest available quote and can be adjusted before confirming.</p></> : <><div className="trade-toggle"><button type="button" className={form.type === "BUY" ? "active" : ""} onClick={() => setForm({ ...form, type: "BUY" })}>Buy</button><button type="button" className={form.type === "SELL" ? "active sell" : ""} onClick={() => setForm({ ...form, type: "SELL" })}>Sell</button></div><label>Ticker<TickerInput value={form.symbol} onChange={(symbol) => setForm({ ...form, symbol })} /></label><label>Company name<input value={form.companyName} onChange={(event) => setForm({ ...form, companyName: event.target.value })} placeholder="Optional" /></label><div className="form-row"><label>Shares<input required min="0" step="any" type="number" value={form.shares} onChange={(event) => setForm({ ...form, shares: event.target.value })} /></label><label>{form.type === "BUY" ? "Purchase price" : "Sale price"}<input required min="0" step="any" type="number" value={form.price} onChange={(event) => setForm({ ...form, price: event.target.value })} /></label></div></>}{message && <p className="trade-message" role="alert">{message}</p>}<button className={`submit ${form.type === "SELL" ? "sell" : ""}`} disabled={saving}>{saving ? "Saving..." : sellAllHolding ? `Sell all ${sellAllHolding.symbol}` : form.type === "BUY" ? "Buy shares" : "Sell shares"}</button></form></div>;
 }
 
 function relativeTime(timestamp: number) { const hours = Math.max(1, Math.floor((Date.now() - timestamp * 1000) / 3_600_000)); return hours < 24 ? `${hours}h ago` : `${Math.floor(hours / 24)}d ago`; }

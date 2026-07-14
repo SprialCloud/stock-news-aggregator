@@ -1132,7 +1132,7 @@
 
 .holdings-table .table-head,
 .holdings-table .table-row {
-  grid-template-columns: 1fr 1.35fr 1fr 1.15fr 1fr 64px;
+  grid-template-columns: 1fr 1.35fr 1fr 1.15fr 1fr 78px;
 }
 
 .trades-table .table-head,
@@ -1149,7 +1149,7 @@
 }
 
 .table-action {
-  min-height: 32px;
+  min-height: 36px;
   padding: 0 12px;
   border: 1px solid color-mix(in srgb, var(--negative) 45%, var(--line));
   border-radius: 999px;
@@ -1157,6 +1157,14 @@
   color: var(--negative);
   font-size: 11px;
   font-weight: 650;
+  white-space: nowrap;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.table-action:hover,
+.table-action:focus-visible {
+  border-color: var(--negative);
+  background: var(--negative-soft);
 }
 
 .trade-pill {
@@ -1331,6 +1339,107 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
+}
+
+.sell-all-summary {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-muted);
+}
+
+.sell-all-symbol {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 17px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sell-all-symbol > div {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.sell-all-symbol b {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 15px;
+}
+
+.sell-all-symbol span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sell-all-symbol em {
+  flex: 0 0 auto;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--negative-soft);
+  color: var(--negative);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.sell-all-summary dl {
+  margin: 0;
+  padding: 5px 18px;
+}
+
+.sell-all-summary dl > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 10px 0;
+}
+
+.sell-all-summary dl > div + div {
+  border-top: 1px solid var(--line);
+}
+
+.sell-all-summary dt {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.sell-all-summary dd {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  font-weight: 680;
+}
+
+.sell-all-note {
+  margin: 13px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.submit.sell {
+  background: var(--negative);
+  color: white;
+}
+
+.submit.sell:hover {
+  background: var(--negative);
+}
+
+.submit:disabled,
+.icon-button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+  transform: none;
 }
 
 .submit {
