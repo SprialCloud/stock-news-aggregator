@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth/server";
-import { normalizeHoldingInput } from "@/lib/holdings";
+import { accumulatePosition, calculateSale, normalizeTradeInput } from "@/lib/holdings";
+
+class PortfolioTradeError extends Error {
+  constructor(message: string, public status: number) {
+    super(message);
+  }
+}
 
 async function getPortfolio() {
   const { data: session } = await auth.getSession();
@@ -26,14 +32,56 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
-    const holdingInput = normalizeHoldingInput(data);
-    if (!holdingInput) return NextResponse.json({ error: "Invalid holding." }, { status: 400 });
-    const { symbol, companyName, shares, averageCost } = holdingInput;
+    const tradeInput = normalizeTradeInput(data);
+    if (!tradeInput) return NextResponse.json({ error: "Invalid trade." }, { status: 400 });
+    const { type, symbol, companyName, shares, price } = tradeInput;
     const portfolio = await getPortfolio();
     if (!portfolio) return NextResponse.json({ error: "Sign in to update your portfolio." }, { status: 401 });
-    const holding = await prisma.holding.upsert({ where: { portfolioId_symbol: { portfolioId: portfolio.id, symbol } }, update: { companyName, shares, averageCost }, create: { portfolioId: portfolio.id, symbol, companyName, shares, averageCost } });
-    return NextResponse.json(holding, { status: 201 });
-  } catch { return NextResponse.json({ error: "Portfolio storage is unavailable. Configure DATABASE_URL." }, { status: 503 }); }
+    const result = await prisma.$transaction(async (transaction) => {
+      const existing = await transaction.holding.findUnique({
+        where: { portfolioId_symbol: { portfolioId: portfolio.id, symbol } },
+      });
+
+      if (type === "SELL") {
+        if (!existing) throw new PortfolioTradeError(`You do not own ${symbol}.`, 404);
+        const sale = calculateSale(existing, { shares, price });
+        if (!sale) throw new PortfolioTradeError(`You only own ${existing.shares} shares of ${symbol}.`, 400);
+
+        const holding = sale.remainingShares === 0
+          ? await transaction.holding.delete({ where: { id: existing.id } }).then(() => null)
+          : await transaction.holding.update({
+              where: { id: existing.id },
+              data: { shares: sale.remainingShares },
+            });
+        const trade = await transaction.trade.create({
+          data: { portfolioId: portfolio.id, type, symbol, companyName: existing.companyName, shares, price, realizedPnL: sale.realizedPnL },
+        });
+
+        return { holding, trade, realizedPnL: sale.realizedPnL };
+      }
+
+      const holding = existing
+        ? await transaction.holding.update({
+            where: { id: existing.id },
+            data: {
+              companyName: companyName === symbol ? existing.companyName : companyName,
+              ...accumulatePosition(existing, { shares, averageCost: price }),
+            },
+          })
+        : await transaction.holding.create({
+            data: { portfolioId: portfolio.id, symbol, companyName, shares, averageCost: price },
+          });
+      const trade = await transaction.trade.create({
+        data: { portfolioId: portfolio.id, type, symbol, companyName: holding.companyName, shares, price },
+      });
+
+      return { holding, trade, realizedPnL: null };
+    });
+    return NextResponse.json(result, { status: 201 });
+  } catch (error) {
+    if (error instanceof PortfolioTradeError) return NextResponse.json({ error: error.message }, { status: error.status });
+    return NextResponse.json({ error: "Portfolio storage is unavailable. Configure DATABASE_URL." }, { status: 503 });
+  }
 }
 
 export async function DELETE(request: NextRequest) {

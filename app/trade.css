@@ -1,0 +1,98 @@
+.trade-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 3px;
+  margin-bottom: 6px;
+  background: #f0f3ef;
+  border-radius: 4px;
+}
+
+.trade-toggle button {
+  padding: 9px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: #64706b;
+  font-weight: 600;
+}
+
+.trade-toggle .active {
+  background: #fff;
+  color: #1d6e4d;
+  box-shadow: 0 1px 4px #0001;
+}
+
+.trade-toggle .active.sell {
+  color: #b34f45;
+}
+
+.submit.sell {
+  background: #9b443c;
+}
+
+.trade-message {
+  margin: 14px 0 -10px;
+  color: #9b443c;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.portfolio-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #edf0ee;
+}
+
+.portfolio-stats span {
+  display: grid;
+  gap: 3px;
+  color: #66747e;
+  font-size: 10px;
+}
+
+.portfolio-stats b {
+  color: #15202a;
+  font-size: 12px;
+}
+
+.holding-quote {
+  display: grid;
+  min-width: 92px;
+  gap: 2px;
+  text-align: right;
+}
+
+.holding-quote b {
+  font-size: 12px;
+}
+
+.holding-quote small,
+.trend b small {
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.trend b {
+  display: grid;
+  gap: 2px;
+}
+
+.trend b small,
+.flat {
+  color: #87918e;
+}
+
+.quote-status {
+  margin: 10px 0 0;
+  color: #87918e;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+}
+
+@media (max-width: 420px) {
+  .holding-quote {
+    min-width: 72px;
+  }
+}

@@ -8,11 +8,12 @@ datasource db {
 }
 
 model User {
-  id         String      @id @default(cuid())
-  email      String      @unique
-  name       String?
-  createdAt  DateTime    @default(now())
-  portfolios Portfolio[]
+  id             String          @id @default(cuid())
+  email          String          @unique
+  name           String?
+  createdAt      DateTime        @default(now())
+  portfolios     Portfolio[]
+  watchlistItems WatchlistItem[]
 }
 
 model Portfolio {
@@ -21,6 +22,7 @@ model Portfolio {
   userId    String
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   holdings  Holding[]
+  trades    Trade[]
   createdAt DateTime   @default(now())
 }
 
@@ -36,4 +38,35 @@ model Holding {
   updatedAt   DateTime  @updatedAt
 
   @@unique([portfolioId, symbol])
+}
+
+enum TradeType {
+  BUY
+  SELL
+}
+
+model Trade {
+  id          String     @id @default(cuid())
+  portfolioId String
+  portfolio   Portfolio  @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  type        TradeType
+  symbol      String
+  companyName String
+  shares      Float
+  price       Float
+  realizedPnL Float?
+  createdAt   DateTime   @default(now())
+
+  @@index([portfolioId, createdAt])
+}
+
+model WatchlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol    String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, symbol])
+  @@index([userId, createdAt])
 }
