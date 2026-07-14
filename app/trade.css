@@ -1,98 +1,104 @@
 .trade-toggle {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  padding: 3px;
-  margin-bottom: 6px;
-  background: #f0f3ef;
-  border-radius: 4px;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--surface-muted);
 }
 
 .trade-toggle button {
-  padding: 9px;
+  min-height: 40px;
   border: 0;
-  border-radius: 3px;
+  border-radius: 9px;
   background: transparent;
-  color: #64706b;
-  font-weight: 600;
+  color: var(--muted-strong);
+  font-weight: 650;
 }
 
-.trade-toggle .active {
-  background: #fff;
-  color: #1d6e4d;
-  box-shadow: 0 1px 4px #0001;
+.trade-toggle button.active {
+  background: var(--surface-elevated);
+  color: var(--positive);
+  box-shadow: var(--shadow-soft);
 }
 
-.trade-toggle .active.sell {
-  color: #b34f45;
+.trade-toggle button.active.sell {
+  color: var(--negative);
 }
 
 .submit.sell {
-  background: #9b443c;
+  background: var(--negative);
 }
 
 .trade-message {
-  margin: 14px 0 -10px;
-  color: #9b443c;
-  font-size: 12px;
-  line-height: 1.4;
+  margin: 14px 0 -8px;
+  color: var(--negative);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .portfolio-stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid #edf0ee;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
 }
 
 .portfolio-stats span {
   display: grid;
-  gap: 3px;
-  color: #66747e;
-  font-size: 10px;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .portfolio-stats b {
-  color: #15202a;
+  color: var(--ink);
+  font-family: var(--font-geist-mono), monospace;
   font-size: 12px;
 }
 
 .holding-quote {
   display: grid;
-  min-width: 92px;
-  gap: 2px;
+  min-width: 96px;
+  gap: 3px;
   text-align: right;
 }
 
 .holding-quote b {
+  font-family: var(--font-geist-sans), sans-serif;
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
 }
 
 .holding-quote small,
 .trend b small {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 500;
 }
 
 .trend b {
   display: grid;
-  gap: 2px;
+  gap: 3px;
 }
 
 .trend b small,
 .flat {
-  color: #87918e;
+  color: var(--muted);
 }
 
 .quote-status {
-  margin: 10px 0 0;
-  color: #87918e;
-  font-family: 'DM Mono', monospace;
-  font-size: 9px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
 }
 
 @media (max-width: 420px) {
   .holding-quote {
-    min-width: 72px;
+    min-width: 76px;
   }
 }
