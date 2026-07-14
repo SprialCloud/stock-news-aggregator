@@ -1,6 +1,6 @@
 # Market Pulse
 
-Full-stack stock-news aggregator built with Next.js 16, Neon Auth, Prisma, and PostgreSQL. It fetches market news from Finnhub when `FINNHUB_API_KEY` is present and falls back to preview data when it is not.
+Full-stack stock-news aggregator built with Next.js 16, Neon Auth, Prisma, and PostgreSQL. It fetches market news and US stock quotes from Finnhub when `FINNHUB_API_KEY` is present; news falls back to preview data when the key is not configured.
 
 ## Run locally
 
@@ -10,6 +10,9 @@ Full-stack stock-news aggregator built with Next.js 16, Neon Auth, Prisma, and P
 4. Run `npm install`, `npm run db:push`, and `npm run dev`.
 
 The portfolio API requires a Neon Auth session. Each authenticated user receives a separate portfolio in PostgreSQL.
+Buy trades increase share count and recalculate weighted average cost. Sell trades reduce the position, preserve the remaining average cost, calculate realized profit or loss, and are stored in the `Trade` table.
+
+The main navigation contains four functional workspaces: personalized news in **For you**, live ETF and ticker data in **Markets**, a per-user persistent **Watchlist**, and a full **Portfolio** view with live valuation and trade history.
 
 ## Deploy
 
