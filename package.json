@@ -14,7 +14,9 @@
   },
   "dependencies": {
     "@neondatabase/auth": "^0.4.2-beta",
+    "@phosphor-icons/react": "^2.1.10",
     "@prisma/client": "^6.2.1",
+    "geist": "^1.7.2",
     "next": "^16.2.10",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
