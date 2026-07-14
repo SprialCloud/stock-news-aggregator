@@ -10,6 +10,144 @@
   width: min(100%, 460px);
 }
 
+.auth-shell {
+  display: grid;
+  gap: 14px;
+}
+
+.auth-help {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.auth-help a,
+.verify-back {
+  color: var(--ink);
+  font-weight: 650;
+  text-underline-offset: 3px;
+}
+
+.verify-card {
+  padding: clamp(24px, 5vw, 36px);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface-elevated);
+  box-shadow: 0 20px 60px rgb(0 0 0 / 7%);
+}
+
+.verify-eyebrow {
+  margin-bottom: 10px;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.verify-card h1 {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(28px, 7vw, 38px);
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.verify-intro {
+  margin: 14px 0 26px;
+  color: var(--ink-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.verify-form {
+  display: grid;
+  gap: 10px;
+}
+
+.verify-form label {
+  margin-top: 6px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.verify-form input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.verify-form input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.verify-form .verify-code {
+  font-family: var(--font-mono), monospace;
+  font-size: 20px;
+  letter-spacing: 0.3em;
+}
+
+.verify-primary,
+.verify-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.verify-primary {
+  margin-top: 12px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.verify-secondary {
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  color: var(--ink);
+}
+
+.verify-primary:disabled,
+.verify-secondary:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.verify-message,
+.verify-success p {
+  margin: 4px 0 0;
+  color: var(--ink-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.verify-success {
+  display: grid;
+  gap: 14px;
+}
+
+.verify-back {
+  display: inline-block;
+  margin-top: 22px;
+  font-size: 13px;
+}
+
 .sign-in {
   display: inline-flex;
   align-items: center;
